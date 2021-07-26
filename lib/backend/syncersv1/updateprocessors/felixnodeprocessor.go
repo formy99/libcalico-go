@@ -111,14 +111,14 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 
 		// Parse the IPv4 VXLAN tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
 		// treat as a delete (i.e. leave ipv4Tunl as nil).
-		if len(node.Spec.IPv4VXLANTunnelAddr) != 0 {
-			ip := cnet.ParseIP(node.Spec.IPv4VXLANTunnelAddr)
+		if len(node.Spec.IPv6VXLANTunnelAddr) != 0 {
+			ip := cnet.ParseIP(node.Spec.IPv6VXLANTunnelAddr)
 			if ip != nil {
 				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel address")
 				vxlanTunlIp = ip.String()
 			} else {
-				log.WithField("IPv4VXLANTunnelAddr", node.Spec.IPv4VXLANTunnelAddr).Warn("Failed to parse IPv4VXLANTunnelAddr")
-				err = fmt.Errorf("failed to parsed IPv4VXLANTunnelAddr as an IP address")
+				log.WithField("IPv6VXLANTunnelAddr", node.Spec.IPv6VXLANTunnelAddr).Warn("Failed to parse IPv6VXLANTunnelAddr")
+				err = fmt.Errorf("failed to parsed IPv6VXLANTunnelAddr as an IP address")
 			}
 		}
 
@@ -184,7 +184,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
-				Name:     "IPv4VXLANTunnelAddr",
+				Name:     "IPv6VXLANTunnelAddr",
 			},
 			Value:    vxlanTunlIp,
 			Revision: kvp.Revision,
