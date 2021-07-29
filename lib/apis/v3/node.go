@@ -48,7 +48,7 @@ type NodeSpec struct {
 	BGP *NodeBGPSpec `json:"bgp,omitempty" validate:"omitempty"`
 
 	// IPv4VXLANTunnelAddr is the IPv4 address of the VXLAN tunnel.
-	IPv4VXLANTunnelAddr string `json:"ipv4VXLANTunnelAddr,omitempty" validate:"omitempty,ipv4"`
+	IPv6VXLANTunnelAddr string `json:"ipv6VXLANTunnelAddr,omitempty" validate:"omitempty,ipv6"`
 
 	// VXLANTunnelMACAddr is the MAC address of the VXLAN tunnel.
 	VXLANTunnelMACAddr string `json:"vxlanTunnelMACAddr,omitempty" validate:"omitempty,mac"`
