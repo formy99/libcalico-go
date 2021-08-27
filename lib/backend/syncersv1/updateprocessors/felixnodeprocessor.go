@@ -184,7 +184,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
-				Name:     "IPv4VXLANTunnelAddr",
+				Name:     "IPv6VXLANTunnelAddr",
 			},
 			Value:    vxlanTunlIp,
 			Revision: kvp.Revision,
