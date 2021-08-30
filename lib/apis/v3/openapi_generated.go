@@ -5604,6 +5604,13 @@ func schema_libcalico_go_lib_apis_v3_NodeSpec(ref common.ReferenceCallback) comm
 							Ref:         ref("github.com/projectcalico/libcalico-go/lib/apis/v3.NodeBGPSpec"),
 						},
 					},
+					"ipv4VXLANTunnelAddr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "IPv4VXLANTunnelAddr is the IPv4 address of the VXLAN tunnel.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"ipv6VXLANTunnelAddr": {
 						SchemaProps: spec.SchemaProps{
 							Description: "IPv6VXLANTunnelAddr is the IPv6 address of the VXLAN tunnel.",

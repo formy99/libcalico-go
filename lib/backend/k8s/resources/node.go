@@ -39,6 +39,7 @@ import (
 const (
 	nodeBgpIpv4AddrAnnotation            = "projectcalico.org/IPv4Address"
 	nodeBgpIpv4IPIPTunnelAddrAnnotation  = "projectcalico.org/IPv4IPIPTunnelAddr"
+	nodeBgpIpv4VXLANTunnelAddrAnnotation = "projectcalico.org/IPv4VXLANTunnelAddr"
 	nodeBgpVXLANTunnelMACAddrAnnotation  = "projectcalico.org/VXLANTunnelMACAddr"
 	nodeBgpIpv6AddrAnnotation            = "projectcalico.org/IPv6Address"
 	nodeBgpIpv6VXLANTunnelAddrAnnotation = "projectcalico.org/IPv6VXLANTunnelAddr"
@@ -340,7 +341,14 @@ func mergeCalicoNodeIntoK8sNode(calicoNode *apiv3.Node, k8sNode *kapiv1.Node) (*
 	// Set the k8s annotations from the Calico node metadata.
 	SetK8sAnnotationsFromCalicoMetadata(k8sNode, calicoNode)
 
-	// Handle VXLAN address.
+	// Handle VXLAN IPv4 address.
+	if calicoNode.Spec.IPv4VXLANTunnelAddr != "" {
+		k8sNode.Annotations[nodeBgpIpv4VXLANTunnelAddrAnnotation] = calicoNode.Spec.IPv4VXLANTunnelAddr
+	} else {
+		delete(k8sNode.Annotations, nodeBgpIpv4VXLANTunnelAddrAnnotation)
+	}
+
+	// Handle VXLAN IPv6 address.
 	if calicoNode.Spec.IPv6VXLANTunnelAddr != "" {
 		k8sNode.Annotations[nodeBgpIpv6VXLANTunnelAddrAnnotation] = calicoNode.Spec.IPv6VXLANTunnelAddr
 	} else {

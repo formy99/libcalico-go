@@ -40,3 +40,21 @@ func FindNodeAddress(node *apiv3.Node, ipType string) (*cnet.IP, *cnet.IPNet) {
 	}
 	return nil, nil
 }
+
+func FindNodeIPv4Address(node *apiv3.Node, ipType string) (*cnet.IP, *cnet.IPNet) {
+	for _, addr := range node.Spec.Addresses {
+		if addr.Type == ipType {
+			ip, cidr, err := cnet.ParseCIDROrIP(addr.Address)
+			if err == nil {
+				if ip.To4() == nil {
+					continue
+				}
+				log.WithFields(log.Fields{"ip": ip, "cidr": cidr}).Debug("Parsed IPv4 address")
+				return ip, cidr
+			} else {
+				log.WithError(err).WithField("IPv4Address", addr.Address).Warn("Failed to parse IPv6Address")
+			}
+		}
+	}
+	return nil, nil
+}

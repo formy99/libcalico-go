@@ -57,7 +57,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 	// v1 model.  For a delete these will all be nil.  If we fail to convert any value then
 	// just treat that as a delete on the underlying key and return the error alongside
 	// the updates.
-	var ipv4, ipv4Tunl, vxlanTunlIp, vxlanTunlMac, wgConfig interface{}
+	var ipv4, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMac, wgConfig interface{}
 	var node *apiv3.Node
 	var ok bool
 	if kvp.Value != nil {
@@ -109,13 +109,26 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 			}
 		}
 
+		// Parse the IPv4 VXLAN tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
+		// treat as a delete (i.e. leave ipv4Tunl as nil).
+		if len(node.Spec.IPv4VXLANTunnelAddr) != 0 {
+			ip := cnet.ParseIP(node.Spec.IPv4VXLANTunnelAddr)
+			if ip != nil {
+				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel IPv4 address")
+				vxlanTunlIpv4 = ip.String()
+			} else {
+				log.WithField("IPv4VXLANTunnelAddr", node.Spec.IPv4VXLANTunnelAddr).Warn("Failed to parse IPv4VXLANTunnelAddr")
+				err = fmt.Errorf("failed to parsed IPv4VXLANTunnelAddr as an IP address")
+			}
+		}
+
 		// Parse the IPv6 VXLAN tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
 		// treat as a delete (i.e. leave ipv4Tunl as nil).
 		if len(node.Spec.IPv6VXLANTunnelAddr) != 0 {
 			ip := cnet.ParseIP(node.Spec.IPv6VXLANTunnelAddr)
 			if ip != nil {
 				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel address")
-				vxlanTunlIp = ip.String()
+				vxlanTunlIpv6 = ip.String()
 			} else {
 				log.WithField("IPv6VXLANTunnelAddr", node.Spec.IPv6VXLANTunnelAddr).Warn("Failed to parse IPv6VXLANTunnelAddr")
 				err = fmt.Errorf("failed to parsed IPv6VXLANTunnelAddr as an IP address")
@@ -184,9 +197,17 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
+				Name:     "IPv4VXLANTunnelAddr",
+			},
+			Value:    vxlanTunlIpv4,
+			Revision: kvp.Revision,
+		},
+		{
+			Key: model.HostConfigKey{
+				Hostname: name,
 				Name:     "IPv6VXLANTunnelAddr",
 			},
-			Value:    vxlanTunlIp,
+			Value:    vxlanTunlIpv6,
 			Revision: kvp.Revision,
 		},
 		{
