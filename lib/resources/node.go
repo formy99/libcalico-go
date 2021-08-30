@@ -52,7 +52,7 @@ func FindNodeIPv4Address(node *apiv3.Node, ipType string) (*cnet.IP, *cnet.IPNet
 				log.WithFields(log.Fields{"ip": ip, "cidr": cidr}).Debug("Parsed IPv4 address")
 				return ip, cidr
 			} else {
-				log.WithError(err).WithField("IPv4Address", addr.Address).Warn("Failed to parse IPv6Address")
+				log.WithError(err).WithField("IPv4Address", addr.Address).Warn("Failed to parse IPv4Address")
 			}
 		}
 	}
