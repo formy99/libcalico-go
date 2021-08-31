@@ -100,7 +100,7 @@ func (c ipamClient) AutoAssign(ctx context.Context, args AutoAssignArgs) ([]net.
 		// Assign IPv4 addresses.
 		log.Debugf("Assigning IPv4 addresses")
 		for _, pool := range args.IPv4Pools {
-			if pool.IP.To4() == nil {
+			if pool.IP.To16() == nil {
 				return nil, nil, fmt.Errorf("provided IPv4 IPPools list contains one or more IPv6 IPPools")
 			}
 		}
