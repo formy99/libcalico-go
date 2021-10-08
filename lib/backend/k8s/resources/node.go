@@ -272,7 +272,7 @@ func K8sNodeToCalico(k8sNode *kapiv1.Node, usePodCIDR bool) (*model.KVPair, erro
 	}
 
 	// Set the VXLAN tunnel address based on annotation.
-	calicoNode.Spec.IPv6VXLANTunnelAddr = annotations[nodeBgpIpv4VXLANTunnelAddrAnnotation]
+	calicoNode.Spec.IPv4VXLANTunnelAddr = annotations[nodeBgpIpv4VXLANTunnelAddrAnnotation]
 	calicoNode.Spec.IPv6VXLANTunnelAddr = annotations[nodeBgpIpv6VXLANTunnelAddrAnnotation]
 	calicoNode.Spec.VXLANTunnelMACAddr = annotations[nodeBgpVXLANTunnelMACAddrAnnotation]
 
