@@ -53,8 +53,11 @@ type NodeSpec struct {
 	// IPv6VXLANTunnelAddr is the IPv6 address of the VXLAN tunnel.
 	IPv6VXLANTunnelAddr string `json:"ipv6VXLANTunnelAddr,omitempty" validate:"omitempty,ipv6"`
 
-	// VXLANTunnelMACAddr is the MAC address of the VXLAN tunnel.
-	VXLANTunnelMACAddr string `json:"vxlanTunnelMACAddr,omitempty" validate:"omitempty,mac"`
+	// VXLANTunnelMACV4Addr is the MAC address of the VXLAN tunnel.
+	VXLANTunnelMACV4Addr string `json:"vxlanTunnelMACV4Addr,omitempty" validate:"omitempty,mac"`
+
+	// VXLANTunnelMACV6Addr is the MAC address of the VXLAN tunnel.
+	VXLANTunnelMACV6Addr string `json:"vxlanTunnelMACV6Addr,omitempty" validate:"omitempty,mac"`
 
 	// OrchRefs for this node.
 	OrchRefs []OrchRef `json:"orchRefs,omitempty" validate:"omitempty"`
