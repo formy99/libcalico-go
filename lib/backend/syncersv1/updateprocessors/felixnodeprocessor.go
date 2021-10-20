@@ -57,7 +57,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 	// v1 model.  For a delete these will all be nil.  If we fail to convert any value then
 	// just treat that as a delete on the underlying key and return the error alongside
 	// the updates.
-	var ipv4, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMac, wgConfig interface{}
+	var ipv4, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMacV4, vxlanTunlMacV6, wgConfig interface{}
 	var node *apiv3.Node
 	var ok bool
 	if kvp.Value != nil {
@@ -141,9 +141,9 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 			macV4 := node.Spec.VXLANTunnelMACV4Addr
 			if macV4 != "" {
 				log.WithField("mac v4 addr", macV4).Debug("Parsed VXLAN tunnel MAC V4 address")
-				vxlanTunlMac = macV4
+				vxlanTunlMacV4 = macV4
 			} else {
-				log.WithField("VXLANTunnelMACAddr", node.Spec.VXLANTunnelMACV4Addr).Warn("VXLANTunnelMACV4Addr not populated")
+				log.WithField("VXLANTunnelMACV4Addr", node.Spec.VXLANTunnelMACV4Addr).Warn("VXLANTunnelMACV4Addr not populated")
 				err = fmt.Errorf("failed to update VXLANTunnelMACAddr")
 			}
 		}
@@ -152,7 +152,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 			macV6 := node.Spec.VXLANTunnelMACV6Addr
 			if macV6 != "" {
 				log.WithField("mac v6 addr", macV6).Debug("Parsed VXLAN tunnel MAC V6 address")
-				vxlanTunlMac = macV6
+				vxlanTunlMacV6 = macV6
 			} else {
 				log.WithField("VXLANTunnelMACV6Addr", node.Spec.VXLANTunnelMACV6Addr).Warn("VXLANTunnelMACV6Addr not populated")
 				err = fmt.Errorf("failed to update VXLANTunnelMACV6Addr")
@@ -224,9 +224,17 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
-				Name:     "VXLANTunnelMACAddr",
+				Name:     "VXLANTunnelMACV6Addr",
 			},
-			Value:    vxlanTunlMac,
+			Value:    vxlanTunlMacV6,
+			Revision: kvp.Revision,
+		},
+		{
+			Key: model.HostConfigKey{
+				Hostname: name,
+				Name:     "VXLANTunnelMACV4Addr",
+			},
+			Value:    vxlanTunlMacV4,
 			Revision: kvp.Revision,
 		},
 		{

@@ -3434,11 +3434,17 @@ func schema_libcalico_go_lib_apis_v3_FelixConfigurationSpec(ref common.Reference
 							Format:      "",
 						},
 					},
-					"deviceRouteSourceAddress": {
+					"deviceRouteSourceIPv4Address": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This is the source address to use on programmed device routes. By default the source address is left blank, leaving the kernel to choose the source address used.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"deviceRouteSourceIPv6Address": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"deviceRouteProtocol": {
@@ -5618,9 +5624,16 @@ func schema_libcalico_go_lib_apis_v3_NodeSpec(ref common.ReferenceCallback) comm
 							Format:      "",
 						},
 					},
-					"vxlanTunnelMACAddr": {
+					"vxlanTunnelMACV4Addr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "VXLANTunnelMACAddr is the MAC address of the VXLAN tunnel.",
+							Description: "VXLANTunnelMACV4Addr is the MAC address of the VXLAN tunnel.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"vxlanTunnelMACV6Addr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "VXLANTunnelMACV6Addr is the MAC address of the VXLAN tunnel.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
