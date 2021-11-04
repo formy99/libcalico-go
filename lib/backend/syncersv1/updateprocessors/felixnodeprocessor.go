@@ -57,7 +57,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 	// v1 model.  For a delete these will all be nil.  If we fail to convert any value then
 	// just treat that as a delete on the underlying key and return the error alongside
 	// the updates.
-	var ipv4, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMacV4, vxlanTunlMacV6, wgConfig interface{}
+	var ipv4, ipv6, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMacV4, vxlanTunlMacV6, wgConfig interface{}
 	var node *apiv3.Node
 	var ok bool
 	if kvp.Value != nil {
@@ -81,6 +81,15 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 					log.WithError(err).WithField("IPv4Address", bgp.IPv4Address).Warn("Failed to parse IPv4Address")
 				}
 			}
+			if len(bgp.IPv6Address) != 0 {
+				ip, cidr, err = cnet.ParseCIDROrIP(bgp.IPv6Address)
+				if err == nil {
+					log.WithFields(log.Fields{"ip": ip, "cidr": cidr}).Debug("Parsed IPv6 address")
+					ipv4 = ip
+				} else {
+					log.WithError(err).WithField("IPv6Address", bgp.IPv6Address).Warn("Failed to parse IPv6Address")
+				}
+			}
 
 			// Parse the IPv4 IPIP tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
 			// treat as a delete (i.e. leave ipv4Tunl as nil).
@@ -97,15 +106,27 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		}
 		// Look for internal node address, if BGP is not running
 		if ipv4 == nil {
-			ip, _ := cresources.FindNodeAddress(node, apiv3.InternalIP)
+			ip, _ := cresources.FindNodeIPv4Address(node, apiv3.InternalIP)
 			if ip != nil {
 				ipv4 = ip
 			}
 		}
 		if ipv4 == nil {
-			ip, _ := cresources.FindNodeAddress(node, apiv3.ExternalIP)
+			ip, _ := cresources.FindNodeIPv4Address(node, apiv3.ExternalIP)
 			if ip != nil {
 				ipv4 = ip
+			}
+		}
+		if ipv6 == nil {
+			ip, _ := cresources.FindNodeAddress(node, apiv3.InternalIP)
+			if ip != nil {
+				ipv6 = ip
+			}
+		}
+		if ipv6 == nil {
+			ip, _ := cresources.FindNodeAddress(node, apiv3.ExternalIP)
+			if ip != nil {
+				ipv6 = ip
 			}
 		}
 
@@ -197,6 +218,13 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 			Value:    ipv4,
 			Revision: kvp.Revision,
 		},
+		//{
+		//	Key: model.HostIPKey{
+		//		Hostname: name,
+		//	},
+		//	Value:    ipv6,
+		//	Revision: kvp.Revision,
+		//},
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
