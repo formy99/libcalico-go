@@ -264,7 +264,9 @@ type FelixConfigurationSpec struct {
 
 	// This is the source address to use on programmed device routes. By default the source address is left blank,
 	// leaving the kernel to choose the source address used.
-	DeviceRouteSourceAddress string `json:"deviceRouteSourceAddress,omitempty"`
+	DeviceRouteSourceIPv4Address string `json:"deviceRouteSourceIPv4Address,omitempty"`
+
+	DeviceRouteSourceIPv6Address string `json:"deviceRouteSourceIPv6Address,omitempty"`
 
 	// This defines the route protocol added to programmed device routes, by default this will be RTPROT_BOOT
 	// when left blank.

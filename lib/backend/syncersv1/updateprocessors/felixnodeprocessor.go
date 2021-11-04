@@ -57,7 +57,7 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 	// v1 model.  For a delete these will all be nil.  If we fail to convert any value then
 	// just treat that as a delete on the underlying key and return the error alongside
 	// the updates.
-	var ipv4, ipv4Tunl, vxlanTunlIp, vxlanTunlMac, wgConfig interface{}
+	var ipv4, ipv6, ipv4Tunl, vxlanTunlIpv4, vxlanTunlIpv6, vxlanTunlMacV4, vxlanTunlMacV6, wgConfig interface{}
 	var node *apiv3.Node
 	var ok bool
 	if kvp.Value != nil {
@@ -81,6 +81,15 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 					log.WithError(err).WithField("IPv4Address", bgp.IPv4Address).Warn("Failed to parse IPv4Address")
 				}
 			}
+			if len(bgp.IPv6Address) != 0 {
+				ip, cidr, err = cnet.ParseCIDROrIP(bgp.IPv6Address)
+				if err == nil {
+					log.WithFields(log.Fields{"ip": ip, "cidr": cidr}).Debug("Parsed IPv6 address")
+					ipv4 = ip
+				} else {
+					log.WithError(err).WithField("IPv6Address", bgp.IPv6Address).Warn("Failed to parse IPv6Address")
+				}
+			}
 
 			// Parse the IPv4 IPIP tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
 			// treat as a delete (i.e. leave ipv4Tunl as nil).
@@ -97,15 +106,27 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		}
 		// Look for internal node address, if BGP is not running
 		if ipv4 == nil {
-			ip, _ := cresources.FindNodeAddress(node, apiv3.InternalIP)
+			ip, _ := cresources.FindNodeIPv4Address(node, apiv3.InternalIP)
 			if ip != nil {
 				ipv4 = ip
 			}
 		}
 		if ipv4 == nil {
-			ip, _ := cresources.FindNodeAddress(node, apiv3.ExternalIP)
+			ip, _ := cresources.FindNodeIPv4Address(node, apiv3.ExternalIP)
 			if ip != nil {
 				ipv4 = ip
+			}
+		}
+		if ipv6 == nil {
+			ip, _ := cresources.FindNodeAddress(node, apiv3.InternalIP)
+			if ip != nil {
+				ipv6 = ip
+			}
+		}
+		if ipv6 == nil {
+			ip, _ := cresources.FindNodeAddress(node, apiv3.ExternalIP)
+			if ip != nil {
+				ipv6 = ip
 			}
 		}
 
@@ -114,24 +135,48 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 		if len(node.Spec.IPv4VXLANTunnelAddr) != 0 {
 			ip := cnet.ParseIP(node.Spec.IPv4VXLANTunnelAddr)
 			if ip != nil {
-				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel address")
-				vxlanTunlIp = ip.String()
+				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel IPv4 address")
+				vxlanTunlIpv4 = ip.String()
 			} else {
 				log.WithField("IPv4VXLANTunnelAddr", node.Spec.IPv4VXLANTunnelAddr).Warn("Failed to parse IPv4VXLANTunnelAddr")
 				err = fmt.Errorf("failed to parsed IPv4VXLANTunnelAddr as an IP address")
 			}
 		}
 
+		// Parse the IPv6 VXLAN tunnel address, Felix expects this as a HostConfigKey.  If we fail to parse then
+		// treat as a delete (i.e. leave ipv4Tunl as nil).
+		if len(node.Spec.IPv6VXLANTunnelAddr) != 0 {
+			ip := cnet.ParseIP(node.Spec.IPv6VXLANTunnelAddr)
+			if ip != nil {
+				log.WithField("ip", ip).Debug("Parsed VXLAN tunnel address")
+				vxlanTunlIpv6 = ip.String()
+			} else {
+				log.WithField("IPv6VXLANTunnelAddr", node.Spec.IPv6VXLANTunnelAddr).Warn("Failed to parse IPv6VXLANTunnelAddr")
+				err = fmt.Errorf("failed to parsed IPv6VXLANTunnelAddr as an IP address")
+			}
+		}
+
 		// Parse the VXLAN tunnel MAC address, Felix expects this as a HostConfigKey.  If we fail to parse then
 		// treat as a delete (i.e. leave ipv4Tunl as nil).
-		if len(node.Spec.VXLANTunnelMACAddr) != 0 {
-			mac := node.Spec.VXLANTunnelMACAddr
-			if mac != "" {
-				log.WithField("mac addr", mac).Debug("Parsed VXLAN tunnel MAC address")
-				vxlanTunlMac = mac
+		if len(node.Spec.VXLANTunnelMACV4Addr) != 0 {
+			macV4 := node.Spec.VXLANTunnelMACV4Addr
+			if macV4 != "" {
+				log.WithField("mac v4 addr", macV4).Debug("Parsed VXLAN tunnel MAC V4 address")
+				vxlanTunlMacV4 = macV4
 			} else {
-				log.WithField("VXLANTunnelMACAddr", node.Spec.VXLANTunnelMACAddr).Warn("VXLANTunnelMACAddr not populated")
+				log.WithField("VXLANTunnelMACV4Addr", node.Spec.VXLANTunnelMACV4Addr).Warn("VXLANTunnelMACV4Addr not populated")
 				err = fmt.Errorf("failed to update VXLANTunnelMACAddr")
+			}
+		}
+
+		if len(node.Spec.VXLANTunnelMACV6Addr) != 0 {
+			macV6 := node.Spec.VXLANTunnelMACV6Addr
+			if macV6 != "" {
+				log.WithField("mac v6 addr", macV6).Debug("Parsed VXLAN tunnel MAC V6 address")
+				vxlanTunlMacV6 = macV6
+			} else {
+				log.WithField("VXLANTunnelMACV6Addr", node.Spec.VXLANTunnelMACV6Addr).Warn("VXLANTunnelMACV6Addr not populated")
+				err = fmt.Errorf("failed to update VXLANTunnelMACV6Addr")
 			}
 		}
 
@@ -173,6 +218,13 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 			Value:    ipv4,
 			Revision: kvp.Revision,
 		},
+		//{
+		//	Key: model.HostIPKey{
+		//		Hostname: name,
+		//	},
+		//	Value:    ipv6,
+		//	Revision: kvp.Revision,
+		//},
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
@@ -186,15 +238,31 @@ func (c *FelixNodeUpdateProcessor) Process(kvp *model.KVPair) ([]*model.KVPair, 
 				Hostname: name,
 				Name:     "IPv4VXLANTunnelAddr",
 			},
-			Value:    vxlanTunlIp,
+			Value:    vxlanTunlIpv4,
 			Revision: kvp.Revision,
 		},
 		{
 			Key: model.HostConfigKey{
 				Hostname: name,
-				Name:     "VXLANTunnelMACAddr",
+				Name:     "IPv6VXLANTunnelAddr",
 			},
-			Value:    vxlanTunlMac,
+			Value:    vxlanTunlIpv6,
+			Revision: kvp.Revision,
+		},
+		{
+			Key: model.HostConfigKey{
+				Hostname: name,
+				Name:     "VXLANTunnelMACV6Addr",
+			},
+			Value:    vxlanTunlMacV6,
+			Revision: kvp.Revision,
+		},
+		{
+			Key: model.HostConfigKey{
+				Hostname: name,
+				Name:     "VXLANTunnelMACV4Addr",
+			},
+			Value:    vxlanTunlMacV4,
 			Revision: kvp.Revision,
 		},
 		{

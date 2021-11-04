@@ -512,7 +512,7 @@ var _ = Describe("Test Node conversion", func() {
 					nodeBgpIpv6AddrAnnotation:            "fd10::10",
 					nodeBgpIpv4AddrAnnotation:            "172.17.17.10",
 					nodeBgpAsnAnnotation:                 "2546",
-					nodeBgpIpv4VXLANTunnelAddrAnnotation: "1.2.3.4",
+					nodeBgpIpv6VXLANTunnelAddrAnnotation: "1.2.3.4",
 					nodeBgpVXLANTunnelMACAddrAnnotation:  "00:11:22:33:44:55",
 					nodeBgpIpv4IPIPTunnelAddrAnnotation:  "5.4.5.4",
 				},

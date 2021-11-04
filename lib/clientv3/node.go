@@ -137,7 +137,15 @@ func (r nodes) Delete(ctx context.Context, name string, opts options.DeleteOptio
 			if err == nil {
 				ips = append(ips, *ipAddr)
 			} else {
-				log.WithError(err).Warnf("Failed to parse VXLAN tunnel address CIDR: %s", n.Spec.IPv4VXLANTunnelAddr)
+				log.WithError(err).Warnf("Failed to parse VXLAN tunnel IPv4 address CIDR: %s", n.Spec.IPv6VXLANTunnelAddr)
+			}
+		}
+		if n.Spec.IPv6VXLANTunnelAddr != "" {
+			ipAddr, _, err := cnet.ParseCIDROrIP(n.Spec.IPv6VXLANTunnelAddr)
+			if err == nil {
+				ips = append(ips, *ipAddr)
+			} else {
+				log.WithError(err).Warnf("Failed to parse VXLAN tunnel IPv6 address CIDR: %s", n.Spec.IPv6VXLANTunnelAddr)
 			}
 		}
 		if n.Spec.Wireguard != nil && n.Spec.Wireguard.InterfaceIPv4Address != "" {

@@ -37,16 +37,18 @@ import (
 )
 
 const (
-	nodeBgpIpv4AddrAnnotation            = "projectcalico.org/IPv4Address"
-	nodeBgpIpv4IPIPTunnelAddrAnnotation  = "projectcalico.org/IPv4IPIPTunnelAddr"
-	nodeBgpIpv4VXLANTunnelAddrAnnotation = "projectcalico.org/IPv4VXLANTunnelAddr"
-	nodeBgpVXLANTunnelMACAddrAnnotation  = "projectcalico.org/VXLANTunnelMACAddr"
-	nodeBgpIpv6AddrAnnotation            = "projectcalico.org/IPv6Address"
-	nodeBgpAsnAnnotation                 = "projectcalico.org/ASNumber"
-	nodeBgpCIDAnnotation                 = "projectcalico.org/RouteReflectorClusterID"
-	nodeK8sLabelAnnotation               = "projectcalico.org/kube-labels"
-	nodeWireguardIpv4IfaceAddrAnnotation = "projectcalico.org/IPv4WireguardInterfaceAddr"
-	nodeWireguardPublicKeyAnnotation     = "projectcalico.org/WireguardPublicKey"
+	nodeBgpIpv4AddrAnnotation             = "projectcalico.org/IPv4Address"
+	nodeBgpIpv4IPIPTunnelAddrAnnotation   = "projectcalico.org/IPv4IPIPTunnelAddr"
+	nodeBgpIpv4VXLANTunnelAddrAnnotation  = "projectcalico.org/IPv4VXLANTunnelAddr"
+	nodeBgpVXLANTunnelMACV4AddrAnnotation = "projectcalico.org/VXLANTunnelMACV4Addr"
+	nodeBgpVXLANTunnelMACV6AddrAnnotation = "projectcalico.org/VXLANTunnelMACV6Addr"
+	nodeBgpIpv6AddrAnnotation             = "projectcalico.org/IPv6Address"
+	nodeBgpIpv6VXLANTunnelAddrAnnotation  = "projectcalico.org/IPv6VXLANTunnelAddr"
+	nodeBgpAsnAnnotation                  = "projectcalico.org/ASNumber"
+	nodeBgpCIDAnnotation                  = "projectcalico.org/RouteReflectorClusterID"
+	nodeK8sLabelAnnotation                = "projectcalico.org/kube-labels"
+	nodeWireguardIpv4IfaceAddrAnnotation  = "projectcalico.org/IPv4WireguardInterfaceAddr"
+	nodeWireguardPublicKeyAnnotation      = "projectcalico.org/WireguardPublicKey"
 )
 
 func NewNodeClient(c *kubernetes.Clientset, usePodCIDR bool) K8sResourceClient {
@@ -272,8 +274,9 @@ func K8sNodeToCalico(k8sNode *kapiv1.Node, usePodCIDR bool) (*model.KVPair, erro
 
 	// Set the VXLAN tunnel address based on annotation.
 	calicoNode.Spec.IPv4VXLANTunnelAddr = annotations[nodeBgpIpv4VXLANTunnelAddrAnnotation]
-	calicoNode.Spec.VXLANTunnelMACAddr = annotations[nodeBgpVXLANTunnelMACAddrAnnotation]
-
+	calicoNode.Spec.IPv6VXLANTunnelAddr = annotations[nodeBgpIpv6VXLANTunnelAddrAnnotation]
+	calicoNode.Spec.VXLANTunnelMACV4Addr = annotations[nodeBgpVXLANTunnelMACV4AddrAnnotation]
+	calicoNode.Spec.VXLANTunnelMACV6Addr = annotations[nodeBgpVXLANTunnelMACV6AddrAnnotation]
 	// Set the node status
 	nodeStatus := apiv3.NodeStatus{}
 	nodeStatus.WireguardPublicKey = annotations[nodeWireguardPublicKeyAnnotation]
@@ -340,18 +343,31 @@ func mergeCalicoNodeIntoK8sNode(calicoNode *apiv3.Node, k8sNode *kapiv1.Node) (*
 	// Set the k8s annotations from the Calico node metadata.
 	SetK8sAnnotationsFromCalicoMetadata(k8sNode, calicoNode)
 
-	// Handle VXLAN address.
+	// Handle VXLAN IPv4 address.
 	if calicoNode.Spec.IPv4VXLANTunnelAddr != "" {
 		k8sNode.Annotations[nodeBgpIpv4VXLANTunnelAddrAnnotation] = calicoNode.Spec.IPv4VXLANTunnelAddr
 	} else {
 		delete(k8sNode.Annotations, nodeBgpIpv4VXLANTunnelAddrAnnotation)
 	}
 
-	// Handle VXLAN MAC address.
-	if calicoNode.Spec.VXLANTunnelMACAddr != "" {
-		k8sNode.Annotations[nodeBgpVXLANTunnelMACAddrAnnotation] = calicoNode.Spec.VXLANTunnelMACAddr
+	// Handle VXLAN IPv6 address.
+	if calicoNode.Spec.IPv6VXLANTunnelAddr != "" {
+		k8sNode.Annotations[nodeBgpIpv6VXLANTunnelAddrAnnotation] = calicoNode.Spec.IPv6VXLANTunnelAddr
 	} else {
-		delete(k8sNode.Annotations, nodeBgpVXLANTunnelMACAddrAnnotation)
+		delete(k8sNode.Annotations, nodeBgpIpv6VXLANTunnelAddrAnnotation)
+	}
+
+	// Handle VXLAN MAC address.
+	if calicoNode.Spec.VXLANTunnelMACV4Addr != "" {
+		k8sNode.Annotations[nodeBgpVXLANTunnelMACV4AddrAnnotation] = calicoNode.Spec.VXLANTunnelMACV4Addr
+	} else {
+		delete(k8sNode.Annotations, nodeBgpVXLANTunnelMACV4AddrAnnotation)
+	}
+
+	if calicoNode.Spec.VXLANTunnelMACV6Addr != "" {
+		k8sNode.Annotations[nodeBgpVXLANTunnelMACV6AddrAnnotation] = calicoNode.Spec.VXLANTunnelMACV6Addr
+	} else {
+		delete(k8sNode.Annotations, nodeBgpVXLANTunnelMACV6AddrAnnotation)
 	}
 
 	if calicoNode.Spec.BGP == nil {

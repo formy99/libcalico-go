@@ -747,11 +747,19 @@ func validateFelixConfigSpec(structLevel validator.StructLevel) {
 		}
 	}
 
-	if c.DeviceRouteSourceAddress != "" {
-		parsedAddress := cnet.ParseIP(c.DeviceRouteSourceAddress)
+	if c.DeviceRouteSourceIPv4Address != "" {
+		parsedAddress := cnet.ParseIP(c.DeviceRouteSourceIPv4Address)
 		if parsedAddress == nil || parsedAddress.Version() != 4 {
-			structLevel.ReportError(reflect.ValueOf(c.DeviceRouteSourceAddress),
-				"DeviceRouteSourceAddress", "", reason("is not a valid IPv4 address"), "")
+			structLevel.ReportError(reflect.ValueOf(c.DeviceRouteSourceIPv4Address),
+				"DeviceRouteSourceIPv4Address", "", reason("is not a valid IPv4 address"), "")
+		}
+	}
+
+	if c.DeviceRouteSourceIPv6Address != "" {
+		parsedAddress := cnet.ParseIP(c.DeviceRouteSourceIPv6Address)
+		if parsedAddress == nil || parsedAddress.Version() != 6 {
+			structLevel.ReportError(reflect.ValueOf(c.DeviceRouteSourceIPv6Address),
+				"DeviceRouteSourceIPv6Address", "", reason("is not a valid IPv6 address"), "")
 		}
 	}
 }
@@ -874,11 +882,11 @@ func validateIPPoolSpec(structLevel validator.StructLevel) {
 			"IPpool.IPIPMode", "", reason("IPIPMode other than 'Never' is not supported on an IPv6 IP pool"), "")
 	}
 
-	// VXLAN cannot be enabled for IPv6.
-	if cidr.Version() == 6 && pool.VXLANMode != api.VXLANModeNever {
-		structLevel.ReportError(reflect.ValueOf(pool.VXLANMode),
-			"IPpool.VXLANMode", "", reason("VXLANMode other than 'Never' is not supported on an IPv6 IP pool"), "")
-	}
+	//VXLAN cannot be enabled for IPv6.
+	//if cidr.Version() == 6 && pool.VXLANMode != api.VXLANModeNever {
+	//	structLevel.ReportError(reflect.ValueOf(pool.VXLANMode),
+	//		"IPpool.VXLANMode", "", reason("VXLANMode other than 'Never' is not supported on an IPv6 IP pool"), "")
+	//}
 
 	// Cannot have both VXLAN and IPIP on the same IP pool.
 	if ipipModeEnabled(pool.IPIPMode) && vxLanModeEnabled(pool.VXLANMode) {
